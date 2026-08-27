@@ -1,0 +1,7 @@
+celery==5.4.0
+redis==5.0.8
+sqlalchemy==2.0.35
+psycopg2-binary==2.9.9
+geoalchemy2==0.15.2
+shapely==2.0.6
+pyproj==3.6.1

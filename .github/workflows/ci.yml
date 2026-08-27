@@ -1,0 +1,74 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install API dependencies
+        run: pip install -r src/api/requirements.txt
+
+      - name: Run unit tests (Section 3 formula regression tests)
+        run: pytest -q tests/unit
+
+  frontend-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: src/frontend/package-lock.json
+
+      - name: Install & build frontend
+        working-directory: src/frontend
+        run: |
+          npm install
+          npm run build
+
+  docker-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build api image
+        run: docker build -t floodrescue-api ./src/api
+
+      - name: Build worker image
+        run: docker build -t floodrescue-worker ./src/worker
+
+      - name: Build frontend image
+        run: docker build -t floodrescue-frontend ./src/frontend
+
+      # Section 9: "Run a container scan (Trivy is free and fast) before
+      # your final demo - an actual finding here is a good line in your
+      # security-requirements writeup." Non-blocking (exit-code 0) so a
+      # student project's CI doesn't fail on informational findings.
+      - name: Trivy scan - api image
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          image-ref: floodrescue-api
+          exit-code: "0"
+          severity: "CRITICAL,HIGH"
+
+      - name: Trivy scan - worker image
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          image-ref: floodrescue-worker
+          exit-code: "0"
+          severity: "CRITICAL,HIGH"

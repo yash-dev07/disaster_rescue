@@ -1,0 +1,37 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+
+# --- Node / frontend ---
+node_modules/
+src/frontend/dist/
+npm-debug.log*
+
+# --- Build output ---
+build/*
+!build/.gitkeep
+
+# --- Env / secrets ---
+.env
+*.env.local
+
+# --- Model weights / datasets (large, don't commit) ---
+models/weights/
+src/models/weights/
+*.pt
+*.onnx
+datasets/
+
+# --- OS / editor ---
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# --- Docker ---
+*.log

@@ -1,0 +1,148 @@
+openapi: 3.0.3
+info:
+  title: FloodRescue API
+  version: 1.0.0
+  description: >
+    Tier 1 academic MVP. Matches project_brief.md Section 2 schemas exactly
+    (the original spec's OpenAPI only covered 4 of ~13 SOS fields; expanded
+    here so a client generated from this spec doesn't silently drop data).
+paths:
+  /api/sos:
+    post:
+      summary: Submit SOS packet
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SOS' }
+      responses:
+        '201':
+          description: created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  incident_id: { type: string }
+        '400':
+          description: missing consent_flag or unlocatable SOS (no coords/cell_info)
+  /api/incidents/{id}:
+    get:
+      summary: Get incident and candidates
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: incident
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Incident' }
+        '404': { description: not found }
+  /api/incidents/{id}/verify:
+    post:
+      summary: Operator verifies or rejects a candidate (required before any dispatch step)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                candidate_id: { type: string }
+                operator_id: { type: string }
+                verified: { type: boolean }
+      responses:
+        '200': { description: recorded }
+  /api/incidents/{id}/dispatch_log:
+    post:
+      summary: >
+        Tier 1 stub - records a "would-dispatch" audit entry only. Never
+        contacts a real dispatch/agency system (Section 0 / Section 7).
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                candidate_id: { type: string }
+                operator_id: { type: string }
+                action: { type: string, enum: [would_dispatch_boat, would_dispatch_helicopter, request_drone] }
+                note: { type: string }
+      responses:
+        '200': { description: recorded }
+components:
+  schemas:
+    CellInfo:
+      type: object
+      properties:
+        mcc: { type: string }
+        mnc: { type: string }
+        lac: { type: integer }
+        cid: { type: integer }
+        cell_center:
+          type: object
+          properties:
+            lat: { type: number }
+            lon: { type: number }
+        cell_uncertainty_m: { type: number }
+    SOS:
+      type: object
+      required: [source, user_hash, timestamp_utc, comm_type, consent_flag]
+      properties:
+        source: { type: string, enum: [app, sms, carrier] }
+        user_hash: { type: string }
+        timestamp_utc: { type: string, format: date-time }
+        coords:
+          type: object
+          properties:
+            lat: { type: number }
+            lon: { type: number }
+        accuracy_m: { type: number }
+        comm_type: { type: string, enum: [gps, cell, sms] }
+        cell_info: { $ref: '#/components/schemas/CellInfo' }
+        rssi: { type: number }
+        battery_pct: { type: integer }
+        optional_photo_url: { type: string }
+        consent_flag: { type: boolean }
+        app_version: { type: string }
+        device_make: { type: string }
+        device_model: { type: string }
+    Candidate:
+      type: object
+      properties:
+        candidate_id: { type: string }
+        lat: { type: number }
+        lon: { type: number }
+        score: { type: number }
+        uncertainty_m: { type: number }
+        confidence_components: { type: object }
+        bounding_box_geojson: { type: object }
+        best_crop_s3: { type: string }
+        detection_class: { type: string }
+        source_tiles: { type: array, items: { type: string } }
+        processing_version: { type: string }
+        model_version: { type: string }
+    Incident:
+      type: object
+      properties:
+        incident_id: { type: string }
+        created_utc: { type: string }
+        sos: { type: object }
+        candidates: { type: array, items: { $ref: '#/components/schemas/Candidate' } }
+        top_candidate_id: { type: string }
+        recommended_action: { type: string }
+        status: { type: string }

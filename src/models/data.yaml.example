@@ -1,0 +1,14 @@
+# Example Ultralytics data.yaml - point 'path' at your FloodNet/RescueNet
+# conversion to YOLO format. Split by event, not randomly (Section 11).
+path: /workspace/datasets/floodrescue/yolov8
+train: images/train   # e.g. Harvey imagery
+val: images/val       # a *different* event's imagery, for real generalization testing
+names:
+  0: person
+  1: group
+  2: boat
+  3: building_flooded
+  4: building_non_flooded
+  5: road_flooded
+  6: road_non_flooded
+  7: vehicle
