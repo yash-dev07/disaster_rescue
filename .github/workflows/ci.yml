@@ -67,7 +67,7 @@ jobs:
           severity: "CRITICAL,HIGH"
 
       - name: Trivy scan - worker image
-        uses: aquasecurity/trivy-action@0.24.0
+        uses: aquasecurity/trivy-action@v0.20.0
         with:
           image-ref: floodrescue-worker
           exit-code: "0"
